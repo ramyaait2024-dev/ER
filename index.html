@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exam Registration System</title>
+  <meta name="description" content="Register for semester exams, check your exam schedule and track your registration status.">
+  <!-- All styling lives in style.css, all behaviour in script.js -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+
+  <!-- =====================================================
+       LOGIN PAGE
+       ===================================================== -->
+  <div id="loginPage" class="login-page">
+    <section class="login-hero">
+      <div class="brand brand-light">
+        <span class="brand-mark" aria-hidden="true">ERS</span>
+        <span class="brand-name">Exam Registration System</span>
+      </div>
+
+      <div class="login-hero-body">
+        <h1>Register for your exams, then check your schedule.</h1>
+        <p>Pick your subjects, confirm your exam slot and track every registration from one place.</p>
+
+        <!-- Hall-ticket style preview of the exam schedule (filled by script.js) -->
+        <div class="ticket" aria-label="Upcoming exam schedule">
+          <div class="ticket-head">
+            <h2>Exam schedule</h2>
+            <p>Registration is open for these exams</p>
+          </div>
+          <div class="ticket-divider" aria-hidden="true"></div>
+          <ul class="ticket-list" id="ticketList"></ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="login-panel">
+      <button type="button" class="theme-toggle login-theme" aria-pressed="false">
+        <span class="theme-icon" aria-hidden="true">☾</span>
+        <span class="theme-label">Dark mode</span>
+      </button>
+
+      <form id="loginForm" class="login-card" novalidate>
+        <h2>Student login</h2>
+        <p class="login-sub">Sign in with your register number to manage your exam registrations.</p>
+
+        <div class="field">
+          <label for="loginUser">Register number or username</label>
+          <input type="text" id="loginUser" name="username" autocomplete="username" placeholder="e.g. 24IT1001">
+          <span class="error-msg" role="alert"></span>
+        </div>
+
+        <div class="field">
+          <label for="loginPass">Password</label>
+          <div class="input-with-button">
+            <input type="password" id="loginPass" name="password" autocomplete="current-password" placeholder="Enter your password">
+            <button type="button" id="togglePass" class="input-button" aria-label="Show password">Show</button>
+          </div>
+          <span class="error-msg" role="alert"></span>
+        </div>
+
+        <div class="login-links">
+          <button type="button" class="link-btn" id="forgotUserBtn">Forgot username?</button>
+          <button type="button" class="link-btn" id="forgotPassBtn">Forgot password?</button>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">Log in</button>
+
+        <p class="demo-hint">
+          Demo account: register number <strong>24IT1001</strong>, password <strong>Exam@2026</strong>
+        </p>
+      </form>
+    </section>
+  </div>
+
+  <!-- =====================================================
+       MAIN APPLICATION (shown after login)
+       ===================================================== -->
+  <div id="app" class="app" hidden>
+
+    <!-- Top navigation bar -->
+    <header class="topbar">
+      <button type="button" id="menuBtn" class="menu-btn" aria-label="Open navigation menu" aria-expanded="false" aria-controls="sidebar">
+        <span></span><span></span><span></span>
+      </button>
+
+      <a class="brand" href="#dashboard" data-scroll="dashboard">
+        <span class="brand-mark" aria-hidden="true">ERS</span>
+        <span class="brand-name">Exam Registration System</span>
+      </a>
+
+      <div class="topbar-actions">
+        <div class="user-chip" title="Signed in student">
+          <span class="avatar avatar-sm" id="topAvatar" aria-hidden="true"></span>
+          <span class="user-chip-text">
+            <strong id="topName"></strong>
+            <small id="topReg"></small>
+          </span>
+        </div>
+        <button type="button" class="theme-toggle" aria-pressed="false">
+          <span class="theme-icon" aria-hidden="true">☾</span>
+          <span class="theme-label">Dark mode</span>
+        </button>
+        <button type="button" id="logoutBtn" class="btn btn-ghost btn-sm">Log out</button>
+      </div>
+    </header>
+
+    <div id="overlay" class="overlay" hidden></div>
+
+    <div class="layout">
+      <!-- Sidebar navigation -->
+      <aside id="sidebar" class="sidebar" aria-label="Main navigation">
+        <nav>
+          <ul class="nav-list">
+            <li><a href="#dashboard" class="nav-link active" data-scroll="dashboard">Dashboard</a></li>
+            <li><a href="#subjects" class="nav-link" data-scroll="subjects">Available subjects</a></li>
+            <li><a href="#register" class="nav-link" data-scroll="register">Exam registration</a></li>
+            <li><a href="#registered" class="nav-link" data-scroll="registered">Registered subjects</a></li>
+            <li><a href="#schedule" class="nav-link" data-scroll="schedule">Exam schedule</a></li>
+            <li><a href="#status" class="nav-link" data-scroll="status">Registration status</a></li>
+            <li><a href="#profile" class="nav-link" data-scroll="profile">Student profile</a></li>
+            <li><a href="#about" class="nav-link" data-scroll="about">About</a></li>
+            <li><a href="#contact" class="nav-link" data-scroll="contact">Contact</a></li>
+          </ul>
+        </nav>
+      </aside>
+
+      <div class="content">
+        <main id="main">
+
+          <!-- ================= DASHBOARD ================= -->
+          <section id="dashboard" class="section">
+            <div class="welcome">
+              <div>
+                <p class="welcome-date" id="todayDate"></p>
+                <h1>Welcome back, <span id="welcomeName"></span></h1>
+                <p class="welcome-id">Register number: <strong id="welcomeReg"></strong></p>
+              </div>
+              <div class="welcome-actions">
+                <button type="button" class="btn btn-light" data-scroll="register">Register for an exam</button>
+                <button type="button" class="btn btn-outline-light" data-scroll="schedule">View exam schedule</button>
+              </div>
+            </div>
+
+            <div class="stat-grid" id="statGrid">
+              <article class="stat-card" style="--i:0">
+                <div class="stat-icon">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2V5z"/><path d="M8 7h7"/></svg>
+                </div>
+                <div>
+                  <p class="stat-label">Total subjects</p>
+                  <p class="stat-value" id="statTotal">0</p>
+                  <p class="stat-note">Open for registration</p>
+                </div>
+              </article>
+              <article class="stat-card" style="--i:1">
+                <div class="stat-icon">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.5"/></svg>
+                </div>
+                <div>
+                  <p class="stat-label">Registered subjects</p>
+                  <p class="stat-value" id="statRegistered">0</p>
+                  <p class="stat-note">Registered by you</p>
+                </div>
+              </article>
+              <article class="stat-card" style="--i:2">
+                <div class="stat-icon">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                </div>
+                <div>
+                  <p class="stat-label">Upcoming exams</p>
+                  <p class="stat-value" id="statUpcoming">0</p>
+                  <p class="stat-note">Registered, not yet taken</p>
+                </div>
+              </article>
+              <article class="stat-card" style="--i:3">
+                <div class="stat-icon">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4m0 0h11l-2 4 2 4H5"/></svg>
+                </div>
+                <div>
+                  <p class="stat-label">Completed exams</p>
+                  <p class="stat-value" id="statCompleted">0</p>
+                  <p class="stat-note">Registered and finished</p>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <!-- ================= AVAILABLE SUBJECTS + SEARCH ================= -->
+          <section id="subjects" class="section">
+            <div class="section-head">
+              <h2>Available subjects</h2>
+              <p>Search by subject name or code, then choose a subject to register.</p>
+            </div>
+
+            <div class="toolbar">
+              <div class="field field-grow">
+                <label for="searchInput">Search subjects</label>
+                <input type="search" id="searchInput" placeholder="Search by name or code, e.g. CS24503">
+              </div>
+              <div class="field">
+                <label for="filterSelect">Show</label>
+                <select id="filterSelect">
+                  <option value="all">All subjects</option>
+                  <option value="open">Open for registration</option>
+                  <option value="registered">Registered</option>
+                  <option value="tba">Date to be announced</option>
+                </select>
+              </div>
+            </div>
+
+            <p class="result-count" id="resultCount" aria-live="polite"></p>
+            <div class="card-grid" id="subjectGrid"></div>
+          </section>
+
+          <!-- ================= EXAM REGISTRATION FORM ================= -->
+          <section id="register" class="section">
+            <div class="section-head">
+              <h2>Exam registration</h2>
+              <p>Fill in your details and choose the subject. The exam date and time are filled in for you.</p>
+            </div>
+
+            <form id="registerForm" class="panel form-grid" novalidate>
+              <div class="field">
+                <label for="regName">Student name</label>
+                <input type="text" id="regName" name="name" autocomplete="name">
+                <span class="error-msg" role="alert"></span>
+              </div>
+              <div class="field">
+                <label for="regNo">Register number</label>
+                <input type="text" id="regNo" name="regNo" autocomplete="off">
+                <span class="error-msg" role="alert"></span>
+              </div>
+              <div class="field">
+                <label for="regEmail">Email</label>
+                <input type="email" id="regEmail" name="email" autocomplete="email">
+                <span class="error-msg" role="alert"></span>
+              </div>
+              <div class="field">
+                <label for="regPhone">Phone number</label>
+                <input type="tel" id="regPhone" name="phone" autocomplete="tel" inputmode="numeric" placeholder="10-digit mobile number">
+                <span class="error-msg" role="alert"></span>
+              </div>
+              <div class="field">
+                <label for="regDept">Department</label>
+                <select id="regDept" name="department">
+                  <option value="">Select department</option>
+                  <option>Information Technology</option>
+                  <option>Computer Science and Engineering</option>
+                  <option>Artificial Intelligence and Data Science</option>
+                  <option>Electronics and Communication Engineering</option>
+                  <option>Electrical and Electronics Engineering</option>
+                  <option>Mechanical Engineering</option>
+                  <option>Civil Engineering</option>
+                </select>
+                <span class="error-msg" role="alert"></span>
+              </div>
+              <div class="field">
+                <label for="regYear">Year</label>
+                <select id="regYear" name="year">
+                  <option value="">Select year</option>
+                  <option value="1">First year</option>
+                  <option value="2">Second year</option>
+                  <option value="3">Third year</option>
+                  <option value="4">Fourth year</option>
+                </select>
+                <span class="error-msg" role="alert"></span>
+              </div>
+              <div class="field">
+                <label for="regSem">Semester</label>
+                <select id="regSem" name="semester">
+                  <option value="">Select semester</option>
+                  <option value="1">Semester 1</option>
+                  <option value="2">Semester 2</option>
+                  <option value="3">Semester 3</option>
+                  <option value="4">Semester 4</option>
+                  <option value="5">Semester 5</option>
+                  <option value="6">Semester 6</option>
+                  <option value="7">Semester 7</option>
+                  <option value="8">Semester 8</option>
+                </select>
+                <span class="error-msg" role="alert"></span>
+              </div>
+              <div class="field">
+                <label for="regSubject">Subject</label>
+                <select id="regSubject" name="subject"></select>
+                <span class="error-msg" role="alert"></span>
+              </div>
+              <div class="field">
+                <label for="regDate">Exam date</label>
+                <input type="text" id="regDate" name="examDate" readonly placeholder="Choose a subject first">
+              </div>
+              <div class="field">
+                <label for="regTime">Exam time</label>
+                <input type="text" id="regTime" name="examTime" readonly placeholder="Choose a subject first">
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Submit registration</button>
+                <button type="button" id="resetFormBtn" class="btn btn-ghost">Clear form</button>
+              </div>
+            </form>
+          </section>
+
+          <!-- ================= REGISTERED SUBJECTS ================= -->
+          <section id="registered" class="section">
+            <div class="section-head">
+              <h2>Registered subjects</h2>
+              <p id="registeredSummary">Subjects you have registered for appear here.</p>
+            </div>
+            <div class="card-grid" id="registeredGrid"></div>
+          </section>
+
+          <!-- ================= EXAM SCHEDULE ================= -->
+          <section id="schedule" class="section">
+            <div class="section-head">
+              <h2>Exam schedule</h2>
+              <p>All exams are held at 10:00 AM unless announced otherwise.</p>
+            </div>
+            <div class="panel table-panel">
+              <table class="schedule-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Subject code</th>
+                    <th scope="col">Subject name</th>
+                    <th scope="col">Exam date</th>
+                    <th scope="col">Exam time</th>
+                    <th scope="col">Exam status</th>
+                  </tr>
+                </thead>
+                <tbody id="scheduleBody"></tbody>
+              </table>
+            </div>
+            <p class="note" id="scheduleNote"></p>
+          </section>
+
+          <!-- ================= REGISTRATION STATUS ================= -->
+          <section id="status" class="section">
+            <div class="section-head">
+              <h2>Registration status</h2>
+              <p>Track every subject and its registration reference number.</p>
+            </div>
+            <div class="panel">
+              <div class="progress-head">
+                <strong id="progressText"></strong>
+                <span id="progressPercent"></span>
+              </div>
+              <div class="progress" role="progressbar" aria-label="Registration progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progressBar">
+                <div class="progress-fill" id="progressFill"></div>
+              </div>
+              <ul class="status-list" id="statusList"></ul>
+            </div>
+          </section>
+
+          <!-- ================= STUDENT PROFILE ================= -->
+          <section id="profile" class="section">
+            <div class="section-head">
+              <h2>Student profile</h2>
+              <p>These details are used to pre-fill your registration form.</p>
+            </div>
+            <div class="panel profile">
+              <div class="avatar avatar-lg" id="profileAvatar" aria-hidden="true"></div>
+              <dl class="profile-list" id="profileList"></dl>
+            </div>
+          </section>
+
+          <!-- ================= ABOUT ================= -->
+          <section id="about" class="section">
+            <div class="section-head">
+              <h2>About</h2>
+            </div>
+            <div class="panel about">
+              <p>The Exam Registration System lets students choose their semester subjects, register for the matching exams and keep track of dates in one place. It replaces paper forms with a single page that works on a phone, tablet or desktop.</p>
+              <ul class="check-list">
+                <li>Each subject can be registered only once.</li>
+                <li>Registrations are saved in this browser, so they are still here the next time you open the page on this device.</li>
+                <li>To change a registration, cancel it from the Registered subjects section and register again.</li>
+              </ul>
+            </div>
+          </section>
+
+          <!-- ================= CONTACT ================= -->
+          <section id="contact" class="section">
+            <div class="section-head">
+              <h2>Contact</h2>
+              <p>Questions about your registration or exam dates? Send a message to the exam cell.</p>
+            </div>
+            <div class="contact-grid">
+              <div class="panel contact-info">
+                <h3>Examination cell</h3>
+                <dl class="contact-list">
+                  <div><dt>Email</dt><dd>examcell@college.edu</dd></div>
+                  <div><dt>Phone</dt><dd>+91 44 0000 0000</dd></div>
+                  <div><dt>Office hours</dt><dd>Monday to Friday, 9:00 AM to 4:30 PM</dd></div>
+                  <div><dt>Location</dt><dd>Administrative block, ground floor</dd></div>
+                </dl>
+              </div>
+
+              <form id="contactForm" class="panel" novalidate>
+                <div class="field">
+                  <label for="contactName">Your name</label>
+                  <input type="text" id="contactName" autocomplete="name">
+                  <span class="error-msg" role="alert"></span>
+                </div>
+                <div class="field">
+                  <label for="contactEmail">Email</label>
+                  <input type="email" id="contactEmail" autocomplete="email">
+                  <span class="error-msg" role="alert"></span>
+                </div>
+                <div class="field">
+                  <label for="contactMessage">Message</label>
+                  <textarea id="contactMessage" rows="4"></textarea>
+                  <span class="error-msg" role="alert"></span>
+                </div>
+                <button type="submit" class="btn btn-primary">Send message</button>
+              </form>
+            </div>
+          </section>
+        </main>
+
+        <!-- ================= FOOTER ================= -->
+        <footer class="footer">
+          <div>
+            <strong>Exam Registration System</strong>
+            <p>Built with HTML, CSS and JavaScript only. No data leaves this browser.</p>
+          </div>
+          <nav class="footer-links" aria-label="Footer">
+            <a href="#subjects" data-scroll="subjects">Subjects</a>
+            <a href="#schedule" data-scroll="schedule">Schedule</a>
+            <a href="#about" data-scroll="about">About</a>
+            <a href="#contact" data-scroll="contact">Contact</a>
+          </nav>
+          <p class="copyright">&copy; 2026 Exam Registration System. All rights reserved.</p>
+        </footer>
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================================================
+       POPUPS (modals)
+       ===================================================== -->
+
+  <!-- Generic message / confirmation popup -->
+  <div class="modal" id="messageModal" hidden>
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="messageTitle" aria-describedby="messageText">
+      <div class="modal-icon" id="messageIcon" aria-hidden="true"></div>
+      <h3 id="messageTitle"></h3>
+      <p id="messageText"></p>
+      <div class="modal-actions" id="messageActions"></div>
+    </div>
+  </div>
+
+  <!-- Forgot username popup -->
+  <div class="modal" id="forgotUserModal" hidden>
+    <form class="modal-box modal-form" id="forgotUserForm" role="dialog" aria-modal="true" aria-labelledby="fuTitle" novalidate>
+      <h3 id="fuTitle">Find your username</h3>
+      <p>Enter the email address registered with the college. Your username is your register number.</p>
+      <div class="field">
+        <label for="fuEmail">Registered email</label>
+        <input type="email" id="fuEmail" autocomplete="email">
+        <span class="error-msg" role="alert"></span>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close-modal="forgotUserModal">Cancel</button>
+        <button type="submit" class="btn btn-primary">Find username</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Forgot password popup -->
+  <div class="modal" id="forgotPassModal" hidden>
+    <form class="modal-box modal-form" id="forgotPassForm" role="dialog" aria-modal="true" aria-labelledby="fpTitle" novalidate>
+      <h3 id="fpTitle">Reset your password</h3>
+      <p>Confirm your identity, then choose a new password.</p>
+      <div class="field">
+        <label for="fpUser">Register number or username</label>
+        <input type="text" id="fpUser" autocomplete="username">
+        <span class="error-msg" role="alert"></span>
+      </div>
+      <div class="field">
+        <label for="fpEmail">Registered email</label>
+        <input type="email" id="fpEmail" autocomplete="email">
+        <span class="error-msg" role="alert"></span>
+      </div>
+      <div class="field">
+        <label for="fpNew">New password</label>
+        <input type="password" id="fpNew" autocomplete="new-password" placeholder="At least 8 characters, with a letter and a number">
+        <span class="error-msg" role="alert"></span>
+      </div>
+      <div class="field">
+        <label for="fpConfirm">Confirm new password</label>
+        <input type="password" id="fpConfirm" autocomplete="new-password">
+        <span class="error-msg" role="alert"></span>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close-modal="forgotPassModal">Cancel</button>
+        <button type="submit" class="btn btn-primary">Reset password</button>
+      </div>
+    </form>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
